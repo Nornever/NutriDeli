@@ -42,6 +42,14 @@ public class CarControl : MonoBehaviour
         // Get all wheel components attached to the car
         wheels = GetComponentsInChildren<WheelControl>();
     }
+
+    void Update()
+    {
+        if (carControls.Car.Reset.WasPressedThisFrame())
+        {
+            ResetCar();
+        }
+    }
             
     // FixedUpdate is called at a fixed time interval
     void FixedUpdate()
@@ -89,5 +97,18 @@ public class CarControl : MonoBehaviour
                 wheel.WheelCollider.brakeTorque = Mathf.Abs(vInput) * brakeTorque;
             }
         }
+    }
+    // Our custom method to safely reset the car
+    private void ResetCar()
+    {
+        // 1. Wipe out all physical momentum so the car doesn't instantly flip again
+        rigidBody.linearVelocity = Vector3.zero;
+        rigidBody.angularVelocity = Vector3.zero;
+
+        // 2. Reset the rotation to 0 on every axis
+        transform.rotation = Quaternion.Euler(0, 0, 0);
+
+        // 3. Teleport the car +2 units up on the Y axis
+        transform.position = new Vector3(transform.position.x, transform.position.y + 2f, transform.position.z);
     }
 }
