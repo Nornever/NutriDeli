@@ -1,4 +1,7 @@
 using UnityEngine;
+using UnityEngine.UI;
+using System.Collections;
+using UnityEngine.InputSystem;
 
 public class CarControl : MonoBehaviour
 {
@@ -10,105 +13,112 @@ public class CarControl : MonoBehaviour
     public float steeringRangeAtMaxSpeed = 10f;
     public float centreOfGravityOffset = -1f;
 
+    [Header("Boost Text")]
+    public Text boostText; // Drag your UI Text here in inspector
+
     private WheelControl[] wheels;
     private Rigidbody rigidBody;
 
-    private CarInputActions carControls; // Reference to the new input system
+    private float boostTimeRemaining = 0f;
+    private float boostDuration = 5f;
 
-    void Awake()
-    {
-        carControls = new CarInputActions(); // Initialize Input Actions
-    }
-    void OnEnable()
-    {
-        carControls.Enable();
-    }
-
-    void OnDisable()
-    {
-        carControls.Disable();
-    }
-    
-    // Start is called before the first frame update
     void Start()
     {
         rigidBody = GetComponent<Rigidbody>();
 
-        // Adjust center of mass to improve stability and prevent rolling
+        // Adjust center of mass
         Vector3 centerOfMass = rigidBody.centerOfMass;
         centerOfMass.y += centreOfGravityOffset;
         rigidBody.centerOfMass = centerOfMass;
 
-        // Get all wheel components attached to the car
+        // Get all wheels
         wheels = GetComponentsInChildren<WheelControl>();
     }
 
     void Update()
     {
-        if (carControls.Car.Reset.WasPressedThisFrame())
+        // Update boost text countdown
+        if (boostTimeRemaining > 0f)
         {
-            ResetCar();
+            boostTimeRemaining -= Time.deltaTime;
+            if (boostText != null)
+                boostText.text = "Boost: " + Mathf.Ceil(boostTimeRemaining) + "s";
+        }
+        else
+        {
+            if (boostText != null)
+                boostText.text = "";
         }
     }
-            
-    // FixedUpdate is called at a fixed time interval
+
     void FixedUpdate()
     {
-        // Read the Vector2 input from the new Input System
-        Vector2 inputVector = carControls.Car.Movement.ReadValue<Vector2>();
+        // --- Keyboard input using New Input System ---
+        float vInput = 0f;
+        float hInput = 0f;
 
-        // Get player input for acceleration and steering
-        float vInput = inputVector.y; // Forward/backward input
-        float hInput = inputVector.x; // Steering input
-        
-        // Calculate current speed along the car's forward axis
-        float forwardSpeed = Vector3.Dot(transform.forward, rigidBody.linearVelocity);
-        float speedFactor = Mathf.InverseLerp(0, maxSpeed, Mathf.Abs(forwardSpeed)); // Normalized speed factor
+        if (Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed) vInput = 1f;
+        else if (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed) vInput = -1f;
 
-        // Reduce motor torque and steering at high speeds for better handling
+        if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed) hInput = 1f;
+        else if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed) hInput = -1f;
+
+        // Forward speed along car's local X axis (your axes setup)
+        float forwardSpeed = Vector3.Dot(transform.right, rigidBody.linearVelocity);
+        float speedFactor = Mathf.InverseLerp(0, maxSpeed, Mathf.Abs(forwardSpeed));
+
         float currentMotorTorque = Mathf.Lerp(motorTorque, 0, speedFactor);
         float currentSteerRange = Mathf.Lerp(steeringRange, steeringRangeAtMaxSpeed, speedFactor);
 
-        // Determine if the player is accelerating or trying to reverse
-        bool isAccelerating = Mathf.Sign(vInput) == Mathf.Sign(forwardSpeed);
+        bool isAccelerating = Mathf.Sign(vInput) == Mathf.Sign(forwardSpeed) || forwardSpeed == 0;
 
         foreach (var wheel in wheels)
         {
-            // Apply steering to wheels that support steering
             if (wheel.steerable)
-            {
                 wheel.WheelCollider.steerAngle = hInput * currentSteerRange;
-            }
 
             if (isAccelerating)
             {
-                // Apply torque to motorized wheels
                 if (wheel.motorized)
-                {
                     wheel.WheelCollider.motorTorque = vInput * currentMotorTorque;
-                }
-                // Release brakes when accelerating
                 wheel.WheelCollider.brakeTorque = 0f;
             }
             else
             {
-                // Apply brakes when reversing direction
                 wheel.WheelCollider.motorTorque = 0f;
                 wheel.WheelCollider.brakeTorque = Mathf.Abs(vInput) * brakeTorque;
             }
         }
     }
-    // Our custom method to safely reset the car
+
     private void ResetCar()
     {
-        // 1. Wipe out all physical momentum so the car doesn't instantly flip again
         rigidBody.linearVelocity = Vector3.zero;
         rigidBody.angularVelocity = Vector3.zero;
-
-        // 2. Reset the rotation to 0 on every axis
         transform.rotation = Quaternion.Euler(0, 0, 0);
-
-        // 3. Teleport the car +2 units up on the Y axis
         transform.position = new Vector3(transform.position.x, transform.position.y + 2f, transform.position.z);
+    }
+
+    // ---- BOOST FUNCTIONS ----
+    public void ActivateSpeedBoost(float duration)
+    {
+        StopAllCoroutines();
+        boostDuration = duration;
+        boostTimeRemaining = duration;
+        StartCoroutine(SpeedBoostCoroutine(duration));
+    }
+
+    private IEnumerator SpeedBoostCoroutine(float duration)
+    {
+        float originalMaxSpeed = maxSpeed;
+        float originalMotorTorque = motorTorque;
+
+        maxSpeed *= 5f;
+        motorTorque *= 2f;
+
+        yield return new WaitForSeconds(duration);
+
+        maxSpeed = originalMaxSpeed;
+        motorTorque = originalMotorTorque;
     }
 }
