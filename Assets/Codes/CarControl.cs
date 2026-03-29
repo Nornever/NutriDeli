@@ -49,6 +49,11 @@ public class CarControl : MonoBehaviour
             if (boostText != null)
                 boostText.text = "";
         }
+
+        if (Keyboard.current.rKey.wasPressedThisFrame)
+        {
+            ResetCar();
+        }
     }
 
     void FixedUpdate()
@@ -63,15 +68,14 @@ public class CarControl : MonoBehaviour
         if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed) hInput = 1f;
         else if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed) hInput = -1f;
 
-        // Forward speed along car's local X axis (your axes setup)
-        float forwardSpeed = Vector3.Dot(transform.right, rigidBody.linearVelocity);
+        //Don't change this part, it calculates the speed factor based on the current forward speed and max speed, which is used to adjust motor torque and steering range.
+        float forwardSpeed = Vector3.Dot(transform.forward, rigidBody.linearVelocity);
         float speedFactor = Mathf.InverseLerp(0, maxSpeed, Mathf.Abs(forwardSpeed));
 
         float currentMotorTorque = Mathf.Lerp(motorTorque, 0, speedFactor);
         float currentSteerRange = Mathf.Lerp(steeringRange, steeringRangeAtMaxSpeed, speedFactor);
 
-        bool isAccelerating = Mathf.Sign(vInput) == Mathf.Sign(forwardSpeed) || forwardSpeed == 0;
-
+        bool isAccelerating = (vInput > 0 && forwardSpeed >= -0.1f) || (vInput < 0 && forwardSpeed <= 0.1f);
         foreach (var wheel in wheels)
         {
             if (wheel.steerable)
@@ -89,14 +93,6 @@ public class CarControl : MonoBehaviour
                 wheel.WheelCollider.brakeTorque = Mathf.Abs(vInput) * brakeTorque;
             }
         }
-    }
-
-    private void ResetCar()
-    {
-        rigidBody.linearVelocity = Vector3.zero;
-        rigidBody.angularVelocity = Vector3.zero;
-        transform.rotation = Quaternion.Euler(0, 0, 0);
-        transform.position = new Vector3(transform.position.x, transform.position.y + 2f, transform.position.z);
     }
 
     // ---- BOOST FUNCTIONS ----
@@ -120,5 +116,12 @@ public class CarControl : MonoBehaviour
 
         maxSpeed = originalMaxSpeed;
         motorTorque = originalMotorTorque;
+    }
+     private void ResetCar()
+    {
+        rigidBody.linearVelocity = Vector3.zero;
+        rigidBody.angularVelocity = Vector3.zero;
+        transform.rotation = Quaternion.Euler(0, 0, 0);
+        transform.position = new Vector3(transform.position.x, transform.position.y + 2f, transform.position.z);
     }
 }
