@@ -3,7 +3,37 @@ guid: 464639b94c5accf4ba29c618b9f1b294
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: fresh fish
+    second: {fileID: 2100000, guid: 292c955642fd248458738b02b746437f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: fried_fish
+    second: {fileID: 2100000, guid: 8c837cbe80091ac4c95f4886149b137c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: fried_ham
+    second: {fileID: 2100000, guid: 3767d630ee65f1c4aa2b0dd2fb0e86b8, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: fried_meat
+    second: {fileID: 2100000, guid: a864a089a563dff489f315c80e5c678e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: ham
+    second: {fileID: 2100000, guid: d2ead05a48106d64f88db1e0018da77a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: meat
+    second: {fileID: 2100000, guid: 0e49ae759ec53234c9c8b29b3b6988ca, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
