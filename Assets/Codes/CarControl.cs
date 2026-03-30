@@ -13,14 +13,25 @@ public class CarControl : MonoBehaviour
     public float steeringRangeAtMaxSpeed = 10f;
     public float centreOfGravityOffset = -1f;
 
+    [Header("Acceleration Settings")]
+    public float accelerationSpeed = 6f;
+    public float decelerationSpeed = 8f;
+
     [Header("Boost Text")]
-    public Text boostText; // Drag your UI Text here in inspector
+    public Text boostText;
+
+    [Header("Speedometer Settings")]
+    public float displayedSpeed = 0f;  // Speed the needle shows
+    public float speedLerpRate = 5f;   // How fast the needle follows the speed
 
     private WheelControl[] wheels;
     private Rigidbody rigidBody;
 
     private float boostTimeRemaining = 0f;
     private float boostDuration = 5f;
+
+    private float currentThrottle = 0f;
+    private bool isDecayingVelocity = false; // Prevent acceleration during decay
 
     void Start()
     {
@@ -31,16 +42,18 @@ public class CarControl : MonoBehaviour
         centerOfMass.y += centreOfGravityOffset;
         rigidBody.centerOfMass = centerOfMass;
 
-        // Get all wheels
         wheels = GetComponentsInChildren<WheelControl>();
     }
 
     void Update()
     {
-        // Update boost text countdown
+        // Smooth displayed speed for speedometer
+        float forwardSpeed = Vector3.Dot(transform.forward, rigidBody.linearVelocity);
+        displayedSpeed = Mathf.Lerp(displayedSpeed, forwardSpeed, speedLerpRate * Time.deltaTime);
+
+        // Boost countdown UI
         if (boostTimeRemaining > 0f)
         {
-            boostTimeRemaining -= Time.deltaTime;
             if (boostText != null)
                 boostText.text = "Boost: " + Mathf.Ceil(boostTimeRemaining) + "s";
         }
@@ -50,6 +63,7 @@ public class CarControl : MonoBehaviour
                 boostText.text = "";
         }
 
+        // Reset car
         if (Keyboard.current.rKey.wasPressedThisFrame)
         {
             ResetCar();
@@ -58,39 +72,58 @@ public class CarControl : MonoBehaviour
 
     void FixedUpdate()
     {
-        // --- Keyboard input using New Input System ---
-        float vInput = 0f;
         float hInput = 0f;
+        float targetThrottle = 0f;
 
-        if (Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed) vInput = 1f;
-        else if (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed) vInput = -1f;
+        // --- Input (New Input System) ---
+        if (Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed)
+            targetThrottle = 1f;
+        else if (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed)
+            targetThrottle = -1f;
 
-        if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed) hInput = 1f;
-        else if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed) hInput = -1f;
+        if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed)
+            hInput = 1f;
+        else if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed)
+            hInput = -1f;
 
-        //Don't change this part, it calculates the speed factor based on the current forward speed and max speed, which is used to adjust motor torque and steering range.
+        // --- Smooth acceleration ---
+        float accelRate = (Mathf.Abs(targetThrottle) > 0.1f) ? accelerationSpeed : decelerationSpeed;
+        currentThrottle = Mathf.Lerp(currentThrottle, targetThrottle, accelRate * Time.fixedDeltaTime);
+
+        // --- Speed calculations ---
         float forwardSpeed = Vector3.Dot(transform.forward, rigidBody.linearVelocity);
         float speedFactor = Mathf.InverseLerp(0, maxSpeed, Mathf.Abs(forwardSpeed));
 
         float currentMotorTorque = Mathf.Lerp(motorTorque, 0, speedFactor);
         float currentSteerRange = Mathf.Lerp(steeringRange, steeringRangeAtMaxSpeed, speedFactor);
 
-        bool isAccelerating = (vInput > 0 && forwardSpeed >= -0.1f) || (vInput < 0 && forwardSpeed <= 0.1f);
+        bool isAccelerating = (currentThrottle > 0 && forwardSpeed >= -0.1f) ||
+                              (currentThrottle < 0 && forwardSpeed <= 0.1f);
+
         foreach (var wheel in wheels)
         {
+            // Steering
             if (wheel.steerable)
                 wheel.WheelCollider.steerAngle = hInput * currentSteerRange;
 
-            if (isAccelerating)
+            // Acceleration / braking
+            if (isAccelerating && !isDecayingVelocity) // <-- Prevent acceleration during decay
             {
                 if (wheel.motorized)
-                    wheel.WheelCollider.motorTorque = vInput * currentMotorTorque;
+                    wheel.WheelCollider.motorTorque = currentThrottle * currentMotorTorque;
+
                 wheel.WheelCollider.brakeTorque = 0f;
             }
             else
             {
                 wheel.WheelCollider.motorTorque = 0f;
-                wheel.WheelCollider.brakeTorque = Mathf.Abs(vInput) * brakeTorque;
+                wheel.WheelCollider.brakeTorque = Mathf.Abs(currentThrottle) * brakeTorque;
+            }
+
+            // Extra brake with SPACE
+            if (Keyboard.current.spaceKey.isPressed)
+            {
+                wheel.WheelCollider.brakeTorque = brakeTorque * 2f;
             }
         }
     }
@@ -98,26 +131,56 @@ public class CarControl : MonoBehaviour
     // ---- BOOST FUNCTIONS ----
     public void ActivateSpeedBoost(float duration)
     {
-        StopAllCoroutines();
         boostDuration = duration;
         boostTimeRemaining = duration;
-        StartCoroutine(SpeedBoostCoroutine(duration));
+
+        // Stop only the boost coroutine to avoid interfering with other coroutines
+        StopCoroutine("SpeedBoostCoroutine");
+        StartCoroutine(SpeedBoostCoroutine());
     }
 
-    private IEnumerator SpeedBoostCoroutine(float duration)
+    private IEnumerator SpeedBoostCoroutine()
     {
         float originalMaxSpeed = maxSpeed;
         float originalMotorTorque = motorTorque;
 
+        // Apply boost
         maxSpeed *= 5f;
         motorTorque *= 2f;
 
-        yield return new WaitForSeconds(duration);
+        // Countdown while boost active
+        while (boostTimeRemaining > 0f)
+        {
+            boostTimeRemaining -= Time.deltaTime;
+            yield return null;
+        }
 
+        // Prevent acceleration during velocity decay
+        isDecayingVelocity = true;
+
+        // Gradually decay velocity over 1 second
+        float decelDuration = 1f;
+        Vector3 startVelocity = rigidBody.linearVelocity;
+        Vector3 targetVelocity = transform.forward * Mathf.Clamp(Vector3.Dot(transform.forward, rigidBody.linearVelocity), -originalMaxSpeed, originalMaxSpeed);
+
+        float t = 0f;
+        while (t < decelDuration)
+        {
+            rigidBody.linearVelocity = Vector3.Lerp(startVelocity, targetVelocity, t / decelDuration);
+            t += Time.deltaTime;
+            yield return null;
+        }
+
+        rigidBody.linearVelocity = targetVelocity;
+        isDecayingVelocity = false; // Allow acceleration again
+
+        // Revert car properties
         maxSpeed = originalMaxSpeed;
         motorTorque = originalMotorTorque;
+        boostTimeRemaining = 0f;
     }
-     private void ResetCar()
+
+    private void ResetCar()
     {
         rigidBody.linearVelocity = Vector3.zero;
         rigidBody.angularVelocity = Vector3.zero;
