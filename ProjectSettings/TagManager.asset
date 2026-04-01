@@ -3,7 +3,8 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 3
-  tags: []
+  tags:
+  - Item
   layers:
   - Default
   - TransparentFX
@@ -11,7 +12,7 @@ TagManager:
   - 
   - Water
   - UI
-  - 
+  - DrivablePath
   - 
   - 
   - 
@@ -49,6 +50,9 @@ TagManager:
     locked: 0
   - name: Mountain
     uniqueID: 276530321
+    locked: 0
+  - name: Truck
+    uniqueID: 200556383
     locked: 0
   - name: Ground
     uniqueID: 2357794803
