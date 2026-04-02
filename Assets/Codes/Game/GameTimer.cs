@@ -1,19 +1,20 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class GameTimer : MonoBehaviour
 {
-    public float totalTime = 120f;
+    public float totalTime = 120f; // 2 minutes
     private float remainingTime;
-    public Text timerText; // assign in inspector
+
+    public Text timerText;          // Assign your legacy Text UI
+    public PlayerStats playerStats; // Reference to truck's PlayerStats
 
     private bool timerRunning = false;
 
     void Start()
     {
-        // Optional: don't start automatically
-        // remainingTime = totalTime;
-        // timerRunning = true;
+        StartTimer(); // Automatically start timer
     }
 
     void Update()
@@ -30,6 +31,7 @@ public class GameTimer : MonoBehaviour
             remainingTime = 0f;
             UpdateTimerUI();
             timerRunning = false;
+            EndGame();
         }
     }
 
@@ -43,10 +45,32 @@ public class GameTimer : MonoBehaviour
         }
     }
 
-    // Add this method so other scripts can start the timer
     public void StartTimer()
     {
         remainingTime = totalTime;
         timerRunning = true;
+    }
+
+    void EndGame()
+    {
+        if (playerStats == null)
+        {
+            Debug.LogError("PlayerStats not assigned in GameTimer!");
+            return;
+        }
+
+        // Save collected fruits to GameData
+        GameData.Instance.applesPicked = playerStats.apples;
+        GameData.Instance.carrotsPicked = playerStats.carrots;
+        GameData.Instance.orangesPicked = playerStats.oranges;
+
+        // Save player name (from NameInput scene)
+        GameData.Instance.playerName = PlayerPrefs.GetString("PlayerName", "Player");
+
+        // Add current player to leaderboard
+        GameData.Instance.AddCurrentPlayerToLeaderboard();
+
+        // Load the Leaderboard scene automatically
+        SceneManager.LoadScene("LeaderboardScene"); // <-- exact name match!
     }
 }

@@ -2,28 +2,26 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
-public class NameInputSceneManager : MonoBehaviour
+public class NameInputManager : MonoBehaviour
 {
     public InputField nameInputField; // assign in inspector
+    public string gameSceneName = "GameScene"; // gameplay scene name
 
-    void Start()
+    public void OnSubmitName()
     {
-        // Pre-fill with saved name if exists
-        if (PlayerPrefs.HasKey("PlayerName"))
-            nameInputField.text = PlayerPrefs.GetString("PlayerName");
-    }
+        string enteredName = nameInputField.text.Trim();
+        if (string.IsNullOrEmpty(enteredName))
+            enteredName = "Player";
 
-    public void StartGame()
-    {
-        string playerName = nameInputField.text;
-
-        if (string.IsNullOrEmpty(playerName))
-            playerName = "Player";
-
-        PlayerPrefs.SetString("PlayerName", playerName);
+        // save for current session & PlayerPrefs
+        PlayerPrefs.SetString("PlayerName", enteredName);
         PlayerPrefs.Save();
 
-        // Load your main game scene
-        SceneManager.LoadScene("SampleScene"); // replace with actual game scene name
+        if (GameData.Instance != null)
+            GameData.Instance.playerName = enteredName;
+
+        Debug.Log("Player name set to: " + enteredName);
+
+        SceneManager.LoadScene("SampleScene");
     }
 }

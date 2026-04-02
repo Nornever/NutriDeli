@@ -4,11 +4,15 @@ public class FruitPickup : MonoBehaviour
 {
     public string fruitType; // "Apple", "Carrot", "Orange"
     private PlayerStats playerStats;
+    private FruitAudio fruitAudio;
 
     void Start()
     {
-        if (playerStats == null)
-            playerStats = FindObjectOfType<PlayerStats>();
+        playerStats = FindObjectOfType<PlayerStats>();
+        fruitAudio = FindObjectOfType<FruitAudio>();
+
+        if (fruitAudio == null)
+            Debug.LogError("FruitAudio not found in scene!");
     }
 
     void OnTriggerEnter(Collider other)
@@ -16,6 +20,10 @@ public class FruitPickup : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             playerStats.CollectFruit(fruitType);
+
+            if (fruitAudio != null)
+                fruitAudio.PlayCollect();
+
             Destroy(gameObject);
         }
     }

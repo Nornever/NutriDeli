@@ -32,7 +32,7 @@ public class CarControl : MonoBehaviour
     private Rigidbody rigidBody;
     private float boostTimeRemaining = 0f;
     private float boostDuration = 5f;
-    private float currentThrottle = 0f;
+    public float currentThrottle = 0f;
     private bool isDecayingVelocity = false;
 
     void Start()

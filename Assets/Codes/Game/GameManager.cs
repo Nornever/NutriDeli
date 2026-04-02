@@ -1,35 +1,46 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.SceneManagement;
 using System.Collections;
 
 public class GameManager : MonoBehaviour
 {
     [Header("Countdown TMP Settings")]
     public TMP_Text countdownText;     // 10-second countdown
-    public float countdownTime = 10f;
+    public float countdownTime = 3f;   // use 3s for testing
 
     [Header("Car Settings")]
-    public CarControl car;             // Your car reference
+    public GameObject car;             // assign your car GameObject
+    private PlayerStats playerStats;
+    private CarControl carControl;
 
-    [Header("Legacy Timer Settings")]
-    public Text timerText;             // Legacy UI Text for 2-minute timer
-    public float totalTime = 120f;     // 2 minutes in seconds
-
+    [Header("Gameplay Timer Settings")]
+    public Text timerText;             // legacy UI Text
+    public float totalTime = 120f;     // 2 minutes
     private float remainingTime;
     private bool timerRunning = false;
 
     void Start()
     {
-        // Disable car and legacy timer at start
-        if (car != null) car.canMove = false;
+        if (car != null)
+        {
+            playerStats = car.GetComponent<PlayerStats>();
+            carControl = car.GetComponent<CarControl>();
 
-        if (timerText != null)
-            timerText.text = "02:00"; // initial display
+            if (carControl != null)
+                carControl.canMove = false; // disable movement until countdown ends
+        }
 
         remainingTime = totalTime;
 
-        // Start the countdown coroutine
+        if (timerText != null)
+        {
+            int minutes = Mathf.FloorToInt(remainingTime / 60f);
+            int seconds = Mathf.FloorToInt(remainingTime % 60f);
+            timerText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
+        }
+
         StartCoroutine(StartCountdown());
     }
 
@@ -54,8 +65,10 @@ public class GameManager : MonoBehaviour
         if (countdownText != null)
             countdownText.gameObject.SetActive(false);
 
-        // Unlock car and start timer
-        if (car != null) car.canMove = true;
+        // Enable car movement after countdown
+        if (carControl != null)
+            carControl.canMove = true;
+
         timerRunning = true;
     }
 
@@ -73,9 +86,7 @@ public class GameManager : MonoBehaviour
             remainingTime = 0f;
             UpdateTimerUI();
             timerRunning = false;
-
-            Debug.Log("Time's up!");
-            // You can trigger end-of-game logic here
+            EndGame();
         }
     }
 
@@ -87,5 +98,24 @@ public class GameManager : MonoBehaviour
             int seconds = Mathf.FloorToInt(remainingTime % 60f);
             timerText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
         }
+    }
+
+    void EndGame()
+    {
+        Debug.Log("Time's up! Ending game.");
+
+        if (playerStats != null && GameData.Instance != null)
+        {
+            GameData.Instance.applesPicked = playerStats.apples;
+            GameData.Instance.carrotsPicked = playerStats.carrots;
+            GameData.Instance.orangesPicked = playerStats.oranges;
+
+            // ensure current player name is up to date
+            GameData.Instance.playerName = PlayerPrefs.GetString("PlayerName", "Player");
+
+            GameData.Instance.AddCurrentPlayerToLeaderboard();
+        }
+
+        SceneManager.LoadScene("LeaderboardScene");
     }
 }
