@@ -67,6 +67,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 624a0ba9ee49e3b4b8d03f372bad738f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7021511934490536411}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 624a0ba9ee49e3b4b8d03f372bad738f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3005094589651811250}
   m_SourcePrefab: {fileID: 100100000, guid: 624a0ba9ee49e3b4b8d03f372bad738f, type: 3}
 --- !u!1 &8130182754423730518 stripped
 GameObject:
@@ -94,3 +97,16 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.02884661, y: 0.0213017, z: 0.021033429}
   m_Center: {x: 0, y: -0.00004862993, z: 0.0026282081}
+--- !u!114 &3005094589651811250
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8130182754423730518}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f051ae231ee8a2146adbcc8ad6b506fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::jerryCan
+  rotateSpeed: 90
