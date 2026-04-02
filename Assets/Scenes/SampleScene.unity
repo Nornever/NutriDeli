@@ -2372,7 +2372,7 @@ MonoBehaviour:
   countdownTime: 3
   car: {fileID: 1321835360}
   timerText: {fileID: 375203252}
-  totalTime: 10
+  totalTime: 120
 --- !u!1001 &1689452423
 PrefabInstance:
   m_ObjectHideFlags: 0
