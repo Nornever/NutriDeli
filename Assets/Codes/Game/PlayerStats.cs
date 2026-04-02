@@ -1,48 +1,61 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerStats : MonoBehaviour
 {
-    public int apples = 0;           // Number of apples collected
+    [Header("Fruit Counters")]
+    public int apples = 0;
     public int carrots = 0;
     public int oranges = 0;
-    public int appleGoal = 10;       // Goal to win
+
+    [Header("Fruit Goals")]
+    public int appleGoal = 10;
     public int carrotsGoal = 10;
     public int orangesGoal = 10;
 
-    public void AddApples(int amount)
-    {
-        apples += amount;
-        Debug.Log("Apples: " + apples);
+    [HideInInspector] public float lastFruitCollectedTime = 0f;
+    private float gameStartTime;
 
-        if (apples >= appleGoal)
+    void Start()
+    {
+        gameStartTime = Time.time;
+    }
+
+    public void CollectFruit(string fruitType)
+    {
+        float elapsed = Time.time - gameStartTime;
+
+        switch (fruitType.ToLower())
         {
-            Debug.Log("Apple goal reached! You win!");
-            // Optional: Load Win Scene here
-            // UnityEngine.SceneManagement.SceneManager.LoadScene("WinScene");
+            case "apple":
+                if (apples < appleGoal) apples++;
+                break;
+            case "carrot":
+                if (carrots < carrotsGoal) carrots++;
+                break;
+            case "orange":
+                if (oranges < orangesGoal) oranges++;
+                break;
+        }
+
+        lastFruitCollectedTime = elapsed;
+
+        // Debug info
+        Debug.Log($"Collected {fruitType}. Total: Apples={apples}, Carrots={carrots}, Oranges={oranges}");
+
+        if (apples >= appleGoal && carrots >= carrotsGoal && oranges >= orangesGoal)
+        {
+            GameOver();
         }
     }
-    public void AddCarrots(int amount)
-    {
-        carrots += amount;
-        Debug.Log("Carrots: " + carrots);
 
-        if (carrots >= carrotsGoal)
-        {
-            Debug.Log("Carrots goal reached! You win!");
-            // Optional: Load Win Scene here
-            // UnityEngine.SceneManagement.SceneManager.LoadScene("WinScene");
-        }
-    }
-    public void AddOranges(int amount)
+    void GameOver()
     {
-        oranges += amount;
-        Debug.Log("Oranges: " + oranges);
+        string playerName = PlayerPrefs.GetString("PlayerName", "Player");
+        PlayerPrefs.SetString("LastPlayerName", playerName);
+        PlayerPrefs.SetFloat("LastPlayerTime", lastFruitCollectedTime);
+        PlayerPrefs.Save();
 
-        if (oranges >= orangesGoal)
-        {
-            Debug.Log("Orange goal reached! You win!");
-            // Optional: Load Win Scene here
-            // UnityEngine.SceneManagement.SceneManager.LoadScene("WinScene");
-        }
+        SceneManager.LoadScene("LeaderboardScene");
     }
 }

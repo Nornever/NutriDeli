@@ -11,21 +11,12 @@ public class Apple : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        // Try to find CarControl in parent hierarchy
-        CarControl car = other.GetComponentInParent<CarControl>();
-        if (car != null)
+        // Check if the collider belongs to the truck
+        PlayerStats stats = other.GetComponentInParent<PlayerStats>();
+        if (stats != null)
         {
-            // Optional: do something like give apples to PlayerStats
-            PlayerStats stats = car.GetComponent<PlayerStats>();
-            if (stats != null)
-            {
-                stats.AddApples(1);
-            }
-
-            // Destroy the apple
-            Destroy(gameObject);
-
-            // Debug log to verify collection
+            stats.CollectFruit("Apple"); // Collect fruit
+            Destroy(gameObject);          // Remove apple from scene
             Debug.Log("Apple collected!");
         }
     }

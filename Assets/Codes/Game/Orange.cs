@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.UIElements;
 
 public class Orange : MonoBehaviour
 {
@@ -12,22 +11,12 @@ public class Orange : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        // Try to find CarControl in parent hierarchy
-        CarControl car = other.GetComponentInParent<CarControl>();
-        if (car != null)
+        PlayerStats stats = other.GetComponentInParent<PlayerStats>();
+        if (stats != null)
         {
-            // Optional: do something like give carrots to PlayerStats
-            PlayerStats stats = car.GetComponent<PlayerStats>();
-            if (stats != null)
-            {
-                stats.AddOranges(1);
-            }
-
-            // Destroy the apple
+            stats.CollectFruit("Orange");
             Destroy(gameObject);
-
-            // Debug log to verify collection
-            Debug.Log("Oranges collected!");
+            Debug.Log("Orange collected!");
         }
     }
 }

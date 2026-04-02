@@ -3,15 +3,17 @@ using UnityEngine.UI;
 
 public class GameTimer : MonoBehaviour
 {
-    public float totalTime = 120f;   // 2 minutes
+    public float totalTime = 120f;
     private float remainingTime;
-    public Text timerText;            // Drag Timer Text here
+    public Text timerText; // assign in inspector
 
     private bool timerRunning = false;
 
     void Start()
     {
-        remainingTime = totalTime;
+        // Optional: don't start automatically
+        // remainingTime = totalTime;
+        // timerRunning = true;
     }
 
     void Update()
@@ -28,7 +30,6 @@ public class GameTimer : MonoBehaviour
             remainingTime = 0f;
             UpdateTimerUI();
             timerRunning = false;
-            Debug.Log("Time's up!");
         }
     }
 
@@ -38,12 +39,14 @@ public class GameTimer : MonoBehaviour
         {
             int minutes = Mathf.FloorToInt(remainingTime / 60f);
             int seconds = Mathf.FloorToInt(remainingTime % 60f);
-            timerText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
+            timerText.text = $"Time: {minutes:00}:{seconds:00}";
         }
     }
 
+    // Add this method so other scripts can start the timer
     public void StartTimer()
     {
+        remainingTime = totalTime;
         timerRunning = true;
     }
 }

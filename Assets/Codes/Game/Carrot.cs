@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.UIElements;
 
 public class Carrot : MonoBehaviour
 {
@@ -7,27 +6,17 @@ public class Carrot : MonoBehaviour
 
     void Update()
     {
-        transform.Rotate(rotateSpeed * Time.deltaTime, 0f, 0f);
+        transform.Rotate(0f, rotateSpeed * Time.deltaTime, 0f);
     }
 
     void OnTriggerEnter(Collider other)
     {
-        // Try to find CarControl in parent hierarchy
-        CarControl car = other.GetComponentInParent<CarControl>();
-        if (car != null)
+        PlayerStats stats = other.GetComponentInParent<PlayerStats>();
+        if (stats != null)
         {
-            // Optional: do something like give carrots to PlayerStats
-            PlayerStats stats = car.GetComponent<PlayerStats>();
-            if (stats != null)
-            {
-                stats.AddCarrots(1);
-            }
-
-            // Destroy the apple
+            stats.CollectFruit("Carrot");
             Destroy(gameObject);
-
-            // Debug log to verify collection
-            Debug.Log("Carrots collected!");
+            Debug.Log("Carrot collected!");
         }
     }
 }
