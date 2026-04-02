@@ -55,7 +55,7 @@ public class CarControl : MonoBehaviour
         if (boostTimeRemaining > 0f)
         {
             if (boostText != null)
-                boostText.text = "Boost: " + Mathf.Ceil(boostTimeRemaining) + "s";
+                boostText.text = "Boost: " + Mathf.Ceil(boostTimeRemaining) + " sec";
         }
         else
         {
